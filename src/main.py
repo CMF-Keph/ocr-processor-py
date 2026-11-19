@@ -28,7 +28,7 @@ def copy_to_clipboard(text: str) -> None:
         text=True,
         check=True
     )
-    logger.debug(f"Copied {text} to clip board")
+    logger.debug(f"Copied '{text}' to clipboard")
 
 def activate_process() -> None:
    threading.Thread(
@@ -49,7 +49,7 @@ def process_ocr() -> None:
             return None
 
         copy_to_clipboard(text)
-        logger.info("OCR Result:", text)    
+        logger.info(f"OCR Result: {text}")
     except Exception as e:
       logger.exception(f"OCR processing failed: {e}")
     finally:
