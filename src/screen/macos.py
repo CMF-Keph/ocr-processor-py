@@ -1,6 +1,5 @@
 import subprocess
 from PIL import Image
-from pathlib import Path
 from config import TEMP_DIR
 
 class MacOSCaptureEngine:    

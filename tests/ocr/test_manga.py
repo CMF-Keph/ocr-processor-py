@@ -1,15 +1,16 @@
-from unittest.mock import patch
-from PIL import Image, ImageDraw
+from pathlib import Path
+from PIL import Image
 
 from ocr import MangaOcrEngine
 
 def test_recognize_gives_test_when_received_an_image():
-  fake_image = Image.new('RGB', (100, 100), color="white")
-  draw = ImageDraw.Draw(fake_image)
-  draw.text((10,10), "テスト", fill="black")
-
   ocr_engine = MangaOcrEngine()
 
-  result = ocr_engine.recognize(fake_image)
+  image_path = (
+    Path(__file__).resolve().parents[1]
+    / "fixtures"
+    / "ocr_test_image.jpg")
 
-  assert result == "テスト"
+  with Image.open(image_path) as image:
+    result = ocr_engine.recognize(image)
+    assert result == "テスト"
