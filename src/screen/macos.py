@@ -8,7 +8,8 @@ class MacOSCaptureEngine:
         self._image_path = TEMP_DIR / "screenshot.png"
         TEMP_DIR.mkdir(parents=True, exist_ok=True)
     
-    def capture(self) -> Image.Image | None:        
+    def capture(self) -> Image.Image | None:      
+      self._image_path.unlink(missing_ok=True)  # Remove previous screenshot if it exists
       result = subprocess.run(["screencapture", "-i", str(self._image_path)])
 
       if result.returncode != 0:

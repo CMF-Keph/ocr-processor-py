@@ -48,3 +48,15 @@ def test_capture_returns_image_when_successful(tmp_path):
     assert result.mode == expected_image.mode
     assert result.tobytes() == expected_image.tobytes()
     mock_run.assert_called_once_with(["screencapture", "-i", str(tmp_path / "screenshot.png")])
+
+def test_cancel_does_not_reuse_previous_capture(tmp_path):
+    Image.new("RGB", (10, 10)).save(tmp_path / "screenshot.png")
+
+    with patch("screen.macos.TEMP_DIR", tmp_path):
+        engine = MacOSCaptureEngine()
+
+        with patch("screen.macos.subprocess.run") as mock_run:
+            mock_run.return_value = CompletedProcess(args=[], returncode=0)
+            result = engine.capture()
+
+    assert result is None
