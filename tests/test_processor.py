@@ -51,7 +51,7 @@ def test_propagates_ocr_error():
 def test_propagates_capture_error():    
     capture_engine = Mock(spec=CaptureEngine)
     capture_engine.capture.side_effect = RuntimeError("Capture Engine Error")
-    ocr_engine = Mock(spec=OcrEngine)        
+    ocr_engine: OcrEngine = Mock(spec=OcrEngine)        
 
     processor = OcrProcessor(ocr_engine, capture_engine)
     

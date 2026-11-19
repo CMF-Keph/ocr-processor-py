@@ -12,13 +12,11 @@ class MacOSCaptureEngine:
       result = subprocess.run(["screencapture", "-i", str(self._image_path)])
 
       if result.returncode != 0:
-          if not self._image_path.exists():
-              return None
-
           raise RuntimeError("Screenshot capture failed.")
           
       if not self._image_path.exists():
-          raise RuntimeError("Screenshot file not found after capture.")
+          print("Screenshot capture was cancelled.")
+          return None
       
       with Image.open(TEMP_DIR / "screenshot.png") as img:
           return img.copy()            
