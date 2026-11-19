@@ -6,8 +6,4 @@ class MangaOcrEngine:
       self._model = MangaOcr()        
     
     def recognize(self, image: Image.Image) -> str:
-        try:
-          return self._model(image)
-        except Exception as e:
-            print(f"Error occurred while recognizing text: {e}")
-            return ""
+        return self._model(image)
