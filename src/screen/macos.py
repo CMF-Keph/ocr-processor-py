@@ -4,7 +4,7 @@ from pathlib import Path
 from config import TEMP_DIR
 
 class MacOSCaptureEngine:    
-    def __init__(self):
+    def __init__(self) -> None:
         self._image_path = TEMP_DIR / "screenshot.png"
         TEMP_DIR.mkdir(parents=True, exist_ok=True)
     
