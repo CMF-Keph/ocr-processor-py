@@ -1,12 +1,12 @@
 import subprocess
 from PIL import Image
 from pathlib import Path
+from config import TEMP_DIR
 
-class MacOSCaptureEngine:
+class MacOSCaptureEngine:    
     def __init__(self):
-        project_directory = Path(__file__).resolve().parent
-        self._image_path: Path = project_directory / ".temp" / "screenshot.png"
-        self._image_path.parent.mkdir(parents=True, exist_ok=True)
+        self._image_path = TEMP_DIR / "screenshot.png"
+        TEMP_DIR.mkdir(parents=True, exist_ok=True)
     
     def capture(self) -> Image.Image | None:        
       result = subprocess.run(["screencapture", "-i", str(self._image_path)])
@@ -20,5 +20,5 @@ class MacOSCaptureEngine:
       if not self._image_path.exists():
           raise RuntimeError("Screenshot file not found after capture.")
       
-      with Image.open(self._image_path) as img:
+      with Image.open(TEMP_DIR / "screenshot.png") as img:
           return img.copy()            
