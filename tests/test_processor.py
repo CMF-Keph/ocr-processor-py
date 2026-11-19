@@ -4,7 +4,7 @@ from screen import CaptureEngine
 from ocr import OcrEngine
 from processor import OcrProcessor
 
-def test_should_not_recognize_image_when_capture_cancelled():
+def test_not_call_recognize_image_when_capture_cancelled():
     capture: CaptureEngine = Mock()
     capture.capture.return_value = None
     ocr: OcrEngine = Mock()
