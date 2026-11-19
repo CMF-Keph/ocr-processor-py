@@ -1,9 +1,18 @@
 import subprocess
 import threading
+import logging
 from pynput import keyboard
 from ocr import MangaOcrEngine
 from screen import MacOSCaptureEngine
 from processor import OcrProcessor
+
+logging.basicConfig(
+   level=logging.DEBUG,
+   format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+   datefmt="%H:%M:%S"
+)    
+
+logger = logging.getLogger(__name__)
 
 capture_lock = threading.Lock()
 
@@ -19,6 +28,7 @@ def copy_to_clipboard(text: str) -> None:
         text=True,
         check=True
     )
+    logger.debug(f"Copied {text} to clip board")
 
 def activate_process() -> None:
    threading.Thread(
@@ -28,18 +38,20 @@ def activate_process() -> None:
 
 def process_ocr() -> None:
     if not capture_lock.acquire(blocking=False):
+        logger.debug("Skipping, process already in use")
         return
     
     try:
         text = ocr_processor.process()
 
-        if text is None:            
+        if text is None:     
+            logger.debug("OCR Processor resolved empty text")      
             return None
 
         copy_to_clipboard(text)
-        print("OCR Result:", text)    
+        logger.info("OCR Result:", text)    
     except Exception as e:
-      print(f"OCR processing failed: {e}")
+      logger.exception(f"OCR processing failed: {e}")
     finally:
       capture_lock.release()
 
