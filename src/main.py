@@ -2,18 +2,18 @@ import subprocess
 import threading
 import PIL.Image
 import os
-from manga_ocr import MangaOcr
 from pynput import keyboard
 from pathlib import Path
+from ocr import MangaOcrEngine
 
 PROJECT_DIR = Path(__file__).resolve().parent
 IMAGE_PATH: Path = PROJECT_DIR / ".temp" / "screenshot.png"
 
 capture_lock = threading.Lock()
 
-print("Initilizing Manga OCR...")
-ocr = MangaOcr()
-print("Manga OCR ready!")
+print("Initializing OCR engine...")
+ocr_engine = MangaOcrEngine()
+print("OCR engine initialized successfully.")
 
 print("Creating temporary directory for screenshots if not exists...")
 os.makedirs(
@@ -26,13 +26,15 @@ print("Press Ctrl + Shift + C to capture a screenshot and perform OCR.")
 def for_canonical(f):
   return lambda k: f(listener.canonical(k))
 
-def copy_to_clipboard(text: str):
-    subprocess.run(
+def copy_to_clipboard(text: str) -> bool:
+    result = subprocess.run(
         ["pbcopy"],
         input=text,
         text=True,
         check=True
     )
+
+    return result.returncode == 0
 
 def activate_screenshot():
    threading.Thread(
@@ -43,7 +45,7 @@ def activate_screenshot():
 
 def capture_screenshot() -> bool:
     print("Capturing screenshot...")   
-    result = subprocess.run(["screencapture", "-i", IMAGE_PATH], check=True)
+    result = subprocess.run(["screencapture", "-i", IMAGE_PATH])
 
     return result.returncode == 0
 
@@ -54,9 +56,11 @@ def process_ocr():
     try:
       if capture_screenshot():
         image = PIL.Image.open(IMAGE_PATH)
-        text = ocr(image)
-        copy_to_clipboard(text)
-        print("OCR Result:", text)
+        text = ocr_engine.recognize(image)
+        if copy_to_clipboard(text):           
+          print("OCR Result:", text)
+        else:
+          print("Failed to copy text to clipboard.")
     except Exception as e:
       print(f"OCR processing failed: {e}")
     finally:
