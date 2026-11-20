@@ -5,21 +5,22 @@ from pynput import keyboard
 from ocr import MangaOcrEngine
 from screen import MacOSCaptureEngine
 from processor import OcrProcessor
-
-logging.basicConfig(
-   level=logging.DEBUG,
-   format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-   datefmt="%H:%M:%S"
-)    
+from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
-capture_lock = threading.Lock()
+def configure_logging() -> None:
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%H:%M:%S"
+    )    
 
-ocr_processor = OcrProcessor(MangaOcrEngine(), MacOSCaptureEngine())
-
-def for_canonical(f):
-  return lambda k: f(listener.canonical(k))
+def listen_for_hotkey(on_activate: Callable[[], None]) -> None:
+    with keyboard.GlobalHotKeys({
+        "<ctrl>+<shift>+c": on_activate
+    }) as listener:
+        listener.join()
 
 def copy_to_clipboard(text: str) -> None:
     subprocess.run(
@@ -30,36 +31,39 @@ def copy_to_clipboard(text: str) -> None:
     )
     logger.debug(f"Copied '{text}' to clipboard")
 
-def activate_process() -> None:
-   threading.Thread(
-      target=process_ocr,
-      daemon=True
-   ).start()
-
-def process_ocr() -> None:
+def process_ocr(ocr_processor: OcrProcessor, capture_lock: threading.Lock) -> None:
     if not capture_lock.acquire(blocking=False):
         logger.debug("Skipping, process already in use")
         return
-    
+
     try:
         text = ocr_processor.process()
 
         if text is None:     
-            logger.debug("OCR Processor resolved empty text")      
-            return None
+            logger.debug("Screencapture probably cancelled")      
+            return
 
         copy_to_clipboard(text)
         logger.info(f"OCR Result: {text}")
-    except Exception as e:
-      logger.exception(f"OCR processing failed: {e}")
+    except Exception:
+        logger.exception("OCR processing failed")
     finally:
-      capture_lock.release()
+        capture_lock.release()
 
-hotkey = keyboard.HotKey(
-    keyboard.HotKey.parse('<ctrl>+<shift>+c'), activate_process
-)
+def main() -> None:
+    configure_logging()
 
-with keyboard.Listener(
-   on_press=for_canonical(hotkey.press), 
-   on_release=for_canonical(hotkey.release)) as listener: listener.join()
+    ocr_processor = OcrProcessor(MangaOcrEngine(), MacOSCaptureEngine())
+    capture_lock = threading.Lock()
 
+    def start_processing() -> None:
+        threading.Thread(
+            target=process_ocr,
+            args=(ocr_processor, capture_lock),
+            daemon=True
+        ).start()
+
+    listen_for_hotkey(start_processing)
+
+if __name__ == "__main__":
+    main()
