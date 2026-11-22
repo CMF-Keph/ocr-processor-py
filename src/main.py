@@ -1,6 +1,7 @@
 import subprocess
 import threading
 import logging
+import httpx
 from pynput import keyboard
 from ocr import MangaOcrEngine
 from screen import MacOSCaptureEngine
@@ -31,6 +32,14 @@ def copy_to_clipboard(text: str) -> None:
     )
     logger.debug(f"Copied '{text}' to clipboard")
 
+def publish_text(text: str) -> None:
+    response = httpx.post(
+        "http://127.0.0.1:8000/api/texts",
+        json={"text": text},
+        timeout=3.0
+    )
+    response.raise_for_status()
+
 def process_ocr(ocr_processor: OcrProcessor, capture_lock: threading.Lock) -> None:
     if not capture_lock.acquire(blocking=False):
         logger.debug("Skipping, process already in use")
@@ -44,6 +53,8 @@ def process_ocr(ocr_processor: OcrProcessor, capture_lock: threading.Lock) -> No
             return
 
         copy_to_clipboard(text)
+        publish_text(text)
+        
         logger.info(f"OCR Result: {text}")
     except Exception:
         logger.exception("OCR processing failed")
