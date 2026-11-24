@@ -2,7 +2,6 @@ import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { TextEntry } from './interfaces/text-entry';
 import { Ocr } from './services/ocr';
 import { firstValueFrom } from 'rxjs';
-import { NgClass } from '../../node_modules/@angular/common/types/_common_module-chunk';
 
 @Component({
   selector: 'app-root',
@@ -12,16 +11,15 @@ import { NgClass } from '../../node_modules/@angular/common/types/_common_module
 })
 export class App implements OnInit, OnDestroy {
   texts = signal<TextEntry[]>([]);
-  latestText = signal<TextEntry | undefined>(undefined);
+  selectedText = signal<TextEntry | undefined>(undefined);
+  latestText = signal<TextEntry | undefined>(undefined);
 
   ocrService = inject(Ocr);
   
   pollingInterval: number = 0;
 
   async pollLastestText(): Promise<void> {
-    const data = await firstValueFrom(this.ocrService.getLatest());
-
-    console.log(data);
+    const data = await firstValueFrom(this.ocrService.getLatest());    
 
     if (this.latestText() === undefined) {
       this.latestText.set(data);
@@ -31,8 +29,9 @@ export class App implements OnInit, OnDestroy {
     if (data.id === this.latestText()!.id)
       return;
 
-    this.texts.update(entries => [...entries, this.latestText()!]);
+    this.texts.update(entries => [...entries, data]);
     this.latestText.set(data);
+    this.selectedText.set(data);
   }
 
   ngOnInit(): void {
@@ -43,6 +42,24 @@ export class App implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     clearInterval(this.pollingInterval);
+  }
+
+  selectText(id: number): void {
+    const text = this.texts().find(text => text.id === id);
+
+    if (!text) return;
+
+    this.selectedText.set(text);
+  }  
+
+  updateText(e: Event, id?: number,): void {
+    if (!id) return;
+
+    const text = this.texts().find(text => text.id === id);
+
+    if (!text) return;
+    
+    text.text = (e.target as HTMLTextAreaElement)?.value;
   }
 }
 

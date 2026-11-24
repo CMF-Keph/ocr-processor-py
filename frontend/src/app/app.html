@@ -1,8 +1,12 @@
-<main class="max-w-xl flex flex-col gap-4">
-  <textarea [value]="this.latestText()!.text || 'Aún no hay ningún texto'" class=" bg-gray-700 hover:bg-gray-900 border border-gray-500 rounded-sm p-2"></textarea>
+<main class="max-w-xl min-w-xl flex flex-col gap-4">
+  <textarea [value]="this.selectedText()?.text || 'Elige un texto'" (input)="updateText( $event, this.selectedText()?.id)" class=" bg-gray-700 hover:bg-gray-900 border border-gray-500 rounded-sm p-2 text-xl h-12"></textarea>
+  @if (selectedText()?.text) {
+    <p class="text-3xl">{{ selectedText()?.text }}</p>
+  }
+  <div class="border border-gray-500 bg-transparent"></div>
   <div class="flex flex-col gap-1">
-    @for (text of this.texts(); track text.id) {
-      <p class="text-sm hover:bg-gray-900 p-2 rounded">{{text.text}}</p>
+    @for (text of this.texts().sort((a, b) => b.id - a.id); track text.id) {
+      <p class="text-2xl hover:bg-gray-900 p-2 rounded flex items-center gap-4 text-gray-300 cursor-pointer" (click)="selectText(text.id)"><span class="text-lg text-gray-400">{{text.id}}:</span> {{text.text}}</p>
     }
   </div>
 </main>
